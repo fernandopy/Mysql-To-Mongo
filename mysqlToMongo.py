@@ -1,9 +1,12 @@
 from pymongo import MongoClient
 import MySQLdb
+import decimal
+from decimal import *
+from datetime import date
 
 
 def conexion():
-	db = MySQLdb.connect(host="localhost", user="user",passwd="pass", db="baseName")
+	db = MySQLdb.connect(host="localhost", user="user",passwd="pass", db="public")
 	cursor = db.cursor()
 	return cursor
 	
@@ -43,9 +46,19 @@ def valores(nombreTabla):
 def crearDict(columnas,valores):
 	arrJson = []
 	for val in valores:
+
 		diccionario = dict.fromkeys(columnas)
 		for i in range(len(columnas)):
-			diccionario[columnas[i]] = val[i]
+			#print(type(val[i]))
+			if isinstance(val[i],Decimal):#problemas con los decimal en mongo 
+				value = float(val[i])#se convierten a Float
+			elif isinstance(val[i],str):#problemas con los string
+				value = val[i].decode('ascii','ignore')
+			elif isinstance(val[i],date):
+				value = str(val[i])
+			else :
+				value= val[i]
+			diccionario[columnas[i]] = value
 		arrJson.append(diccionario)
 		diccionario = None
 	return arrJson 
@@ -56,9 +69,10 @@ def insertMongo(arreglo,nombCollect):
 	db = client.datos#datos es el nombre de la base
 	insert = "db."+nombCollect+".insert(arreglo)"
 	#nombCollect es el nombre de la collection
-	exec insert
+	print insert
+	exec insert#'''
 		
 	
 if __name__ =="__main__":
-	nameColumnas("baseName")#Nombre de la base de datos
+	nameColumnas("public")#Nombre de la base de datos
 	
